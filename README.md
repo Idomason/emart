@@ -1,6 +1,6 @@
 # Fullstack Order Management System
 
-![Project Banner](https://via.placeholder.com/1200x400?text=Order+Management+System)  
+![Project Banner]()  
 *A complete solution for order tracking with real-time admin-user communication*
 
 ## Features
@@ -12,7 +12,7 @@
 
 ## Tech Stack
 **Frontend**:
-- Next.js 14 (App Router)
+- Next.js 15 (App Router)
 - TypeScript
 - Tailwind CSS + shadcn/ui
 - React Query
