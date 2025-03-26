@@ -8,7 +8,7 @@
 - **Order Management**: Create, view, and track order status (Review → Processing → Completed)
 - **Real-time Chat**: WebSocket-powered communication per order
 - **Admin Dashboard**: Manage all orders and chats
-- **Responsive UI**: Built with Next.js 14 and Tailwind CSS
+- **Responsive UI**: Built with Next.js 15 and Tailwind CSS
 
 ## Tech Stack
 **Frontend**:
