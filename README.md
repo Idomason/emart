@@ -1,6 +1,6 @@
 # Fullstack Order Management System
 
-![Project Banner](https://i.postimg.cc/qRkRZ06d/order-management.png)  
+[![order-management.png](https://i.postimg.cc/qRkRZ06d/order-management.png)](https://postimg.cc/4KSsmD18)
 *A complete solution for order tracking with real-time admin-user communication*
 
 ## Features
