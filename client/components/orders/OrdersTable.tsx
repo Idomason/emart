@@ -18,6 +18,7 @@ interface OrdersTableProps {
   onDelete?: (id: string) => Promise<void>;
   onSelect?: (order: Order) => void;
   isAdmin?: boolean;
+  isDeleting?: boolean;
 }
 
 const getStatusColor = (status: Order["status"]) => {
@@ -39,6 +40,7 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
   onDelete,
   onSelect,
   isAdmin = false,
+  isDeleting,
 }) => {
   return (
     <div className="rounded-md border">
@@ -96,8 +98,9 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                     variant="destructive"
                     size="sm"
                     onClick={() => onDelete(order._id)}
+                    disabled={isDeleting}
                   >
-                    Delete
+                    {isDeleting ? "Deleting..." : "Delete"}
                   </Button>
                 )}
               </TableCell>

@@ -1,66 +1,64 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { useOrders } from "@/lib/hooks/useOrders";
+import React from "react";
 import { OrdersTable } from "@/components/orders/OrdersTable";
 import { OrderForm } from "@/components/orders/OrderForm";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import {
+  useMyOrders,
+  useCreateOrder,
+  useDeleteOrder,
+} from "@/lib/hooks/orders";
+import { Loader2 } from "lucide-react";
 
 export default function OrdersPage() {
-  const orders = useSelector((state: RootState) => state.order?.orders ?? []);
-  const isLoading = useSelector(
-    (state: RootState) => state.order?.isLoading ?? false
-  );
-  const error = useSelector((state: RootState) => state.order?.error ?? null);
-  const { fetchMyOrders, createOrder, updateOrder, deleteOrder, clearError } =
-    useOrders();
   const { toast } = useToast();
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchMyOrders();
-  }, [fetchMyOrders]);
-
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Error",
-        description: error,
-        variant: "destructive",
-      });
-      clearError();
-    }
-  }, [error, toast, clearError]);
+  // Use React Query hooks
+  const { data: myOrders = [], isLoading: isLoadingOrders } = useMyOrders();
+  const { mutate: createOrder, isLoading: isCreating } = useCreateOrder();
+  const { mutate: deleteOrder, isLoading: isDeleting } = useDeleteOrder();
 
   const handleCreateOrder = async (data: {
     description: string;
     quantity: number;
   }) => {
-    try {
-      await createOrder(data);
-      toast({
-        title: "Success",
-        description: "Order created successfully",
-      });
-    } catch (error) {
-      // Error is handled by the orders hook
-    }
+    createOrder(data, {
+      onSuccess: () => {
+        toast({
+          title: "Success",
+          description: "Order created successfully",
+        });
+      },
+      onError: (error: Error) => {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create order",
+          variant: "destructive",
+        });
+      },
+    });
   };
 
   const handleDeleteOrder = async (id: string) => {
-    try {
-      await deleteOrder(id);
-      toast({
-        title: "Success",
-        description: "Order deleted successfully",
-      });
-    } catch (error) {
-      // Error is handled by the orders hook
-    }
+    deleteOrder(id, {
+      onSuccess: () => {
+        toast({
+          title: "Success",
+          description: "Order deleted successfully",
+        });
+      },
+      onError: (error: Error) => {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to delete order",
+          variant: "destructive",
+        });
+      },
+    });
   };
 
   if (!user) {
@@ -81,7 +79,7 @@ export default function OrdersPage() {
             <CardTitle>Create New Order</CardTitle>
           </CardHeader>
           <CardContent>
-            <OrderForm onSubmit={handleCreateOrder} isSubmitting={isLoading} />
+            <OrderForm onSubmit={handleCreateOrder} isSubmitting={isCreating} />
           </CardContent>
         </Card>
 
@@ -90,7 +88,17 @@ export default function OrdersPage() {
             <CardTitle>My Orders</CardTitle>
           </CardHeader>
           <CardContent>
-            <OrdersTable orders={orders} onDelete={handleDeleteOrder} />
+            {isLoadingOrders ? (
+              <div className="flex justify-center items-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : (
+              <OrdersTable
+                orders={myOrders}
+                onDelete={handleDeleteOrder}
+                isDeleting={isDeleting}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

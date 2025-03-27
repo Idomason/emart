@@ -6,8 +6,7 @@ export const useMyOrders = () => {
   return useQuery({
     queryKey: ["orders", "my"],
     queryFn: async () => {
-      const response = await ordersApi.getMyOrders();
-      return response.data;
+      return ordersApi.getMyOrders();
     },
   });
 };
@@ -16,8 +15,7 @@ export const useAllOrders = () => {
   return useQuery({
     queryKey: ["orders", "all"],
     queryFn: async () => {
-      const response = await ordersApi.getAllOrders();
-      return response.data;
+      return ordersApi.getAllOrders();
     },
   });
 };
@@ -26,8 +24,7 @@ export const useOrder = (id: string) => {
   return useQuery({
     queryKey: ["orders", id],
     queryFn: async () => {
-      const response = await ordersApi.getOrder(id);
-      return response.data;
+      return ordersApi.getOrder(id);
     },
     enabled: !!id,
   });
@@ -38,8 +35,7 @@ export const useCreateOrder = () => {
 
   return useMutation({
     mutationFn: async (data: Pick<Order, "description" | "quantity">) => {
-      const response = await ordersApi.createOrder(data);
-      return response.data;
+      return ordersApi.createOrder(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -60,8 +56,7 @@ export const useUpdateOrderStatus = () => {
       id: string;
       status: Order["status"];
     }) => {
-      const response = await ordersApi.updateOrderStatus(id, status);
-      return response.data;
+      return ordersApi.updateOrderStatus(id, status);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
