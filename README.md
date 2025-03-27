@@ -39,147 +39,212 @@ cd order-management-system
 
 
 
-## API Documentation
 
-Documentation
-Emart
-An order management app
+```typescript:client/lib/hooks/useAuth.ts
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store";
 
--**Auth**
-User authentication route handlers
+export const useAuth = () => {
+  const { user, isLoading, error } = useSelector((state: RootState) => state.auth);
 
-POST
-SignUp
-127.0.0.1:5000/api/v1/auth/signup
-﻿
+  return {
+    user,
+    isLoading,
+    error,
+    isAuthenticated: !!user,
+  };
+};
+```
 
-Body
-raw (json)
-json
+I'll help you create a clean API documentation for your GitHub README based on the codebase. Here's a formatted documentation:
+
+```markdown
+# API Documentation
+
+## Authentication Endpoints
+
+### POST /api/v1/auth/login
+Authenticate a user and create a session.
+
+**Request Body:**
+```json
 {
-    "email": "angila@gmail.com",
-    "password": "123Angila*"
+  "email": "string",
+  "password": "string"
 }
-GET
-GetMe
-127.0.0.1:5000/api/v1/auth/me
-This route fetches the data of the authenticated user only.
+```
 
-﻿
-
-Body
-raw (json)
-json
+**Response:**
+```json
 {
-    "email": "mason@gmail.com",
-    "password": "u4nahjaj"
+  "success": true,
+  "data": {
+    "email": "string",
+    "role": "user" | "admin",
+    "_id": "string"
+  }
 }
-POST
-Login
-127.0.0.1:5000/api/v1/auth/login
-Login route to authenticate users coming to the platform.
+```
 
-﻿
+### POST /api/v1/auth/signup
+Register a new user.
 
-Body
-raw (json)
-json
+**Request Body:**
+```json
 {
-    "email": "angila@gmail.com",
-    "password": "123Angila*"
+  "email": "string",
+  "password": "string"
 }
-POST
-Logout
-127.0.0.1:5000/api/v1/auth/logout
-This route logs out the authenticated user
+```
 
-﻿
-
-Body
-raw (json)
-json
+**Response:**
+```json
 {
-    "email": "mason@gmail.com",
-    "password": "1"
+  "success": true,
+  "data": {
+    "email": "string",
+    "_id": "string"
+  }
 }
-Orders
-Users create orders
+```
 
-﻿
+### POST /api/v1/auth/logout
+Logout the current user and clear session.
 
-GET
-Get Orders
-127.0.0.1:5000/api/v1/orders/
-This API Route fetches all orders in the database. This route is exclusively reserved for the Admin only.
-
-﻿
-
-GET
-Get My Orders
-127.0.0.1:5000/api/v1/orders/my-orders/
-This API Route fetches all user specific orders in the database. In other words, it returns only all the orders created by a user.
-
-﻿
-
-POST
-Create Order
-127.0.0.1:5000/api/v1/orders/
-This route is used to create orders by only an authenticated user.
-
-﻿
-
-Body
-raw (json)
-json
+**Response:**
+```json
 {
-    "description": "80kg bag of white garri and 20 pieces of yam",
-    "quantity": "20"
+  "success": true
 }
-PATCH
-Update Order
-127.0.0.1:5000/api/v1/orders/67e43f0ec26fb7494d9481d4
-This route can only be accessed by the admin, it updates orders created by users especially updating users' order status.
+```
 
-﻿
+## Order Endpoints
 
-Body
-raw (json)
-json
+### GET /api/v1/orders
+Get all orders (Admin only).
+
+**Response:**
+```json
 {
-    "status": "processing"
+  "success": true,
+  "data": [
+    {
+      "_id": "string",
+      "user": "string",
+      "description": "string",
+      "quantity": "number",
+      "status": "review" | "completed" | "cancelled",
+      "createdAt": "string",
+      "updatedAt": "string"
+    }
+  ]
 }
-DELETE
-Delete Order
-127.0.0.1:5000/api/v1/orders/67e43f0ec26fb7494d9481d4
-This route is only accessible by the admin, used for deleting users' orders
+```
 
-﻿
+### GET /api/v1/orders/my-orders
+Get orders for the authenticated user.
 
-PATCH
-Update Order Status
-127.0.0.1:5000/api/v1/orders/67e448c2136960fbcdf1a270/status
-This route updates users' order status, accessible only to the admin.
-
-﻿
-
-Body
-raw (json)
-json
+**Response:**
+```json
 {
-    "status": "completed"
+  "success": true,
+  "data": [
+    {
+      "_id": "string",
+      "user": "string",
+      "description": "string",
+      "quantity": "number",
+      "status": "review" | "completed" | "cancelled",
+      "createdAt": "string",
+      "updatedAt": "string"
+    }
+  ]
 }
-Chat Room
-﻿
+```
 
-GET
-Get Chat Messages
-127.0.0.1:5000/api/v1/chats/67e48c0c136960fbcdf1a294
-Get all chat messages based on the order with which the chat was created.
+### POST /api/v1/orders
+Create a new order.
 
-﻿
+**Request Body:**
+```json
+{
+  "description": "string",
+  "quantity": "number"
+}
+```
 
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "string",
+    "user": "string",
+    "description": "string",
+    "quantity": "number",
+    "status": "review",
+    "createdAt": "string",
+    "updatedAt": "string"
+  }
+}
+```
 
+### PATCH /api/v1/orders/:id
+Update an order.
 
+**Request Body:**
+```json
+{
+  "description": "string",
+  "quantity": "number"
+}
+```
 
+### PATCH /api/v1/orders/:id/status
+Update order status (Admin only).
 
+**Request Body:**
+```json
+{
+  "status": "completed" | "cancelled"
+}
+```
 
+### DELETE /api/v1/orders/:id
+Delete an order.
+
+## WebSocket Events
+
+### Authentication
+- Connect with JWT token in auth object
+- Connection error if token is invalid or missing
+
+### Events
+- `joinOrderRoom`: Join a specific order's chat room
+- `chatHistory`: Receive chat history when joining a room
+- `sendMessage`: Send a message in the current room
+- `newMessage`: Receive new messages in the room
+
+### Error Events
+- `error`: Receive error messages
+- `connect_error`: Connection error details
+
+## Authentication
+All endpoints (except login/signup) require authentication via JWT token in cookies.
+Admin-only endpoints require an admin role.
+
+## Error Responses
+```json
+{
+  "success": false,
+  "message": "Error description"
+}
+```
+
+## Notes
+- All requests that require authentication should include credentials
+- API base URL: `http://localhost:5000/api/v1` (configurable via environment)
+- WebSocket connection URL: `http://localhost:5000`
+```
+
+This documentation covers the main endpoints and WebSocket events in your application, including authentication, order management, and real-time chat functionality. Feel free to customize it further based on your specific needs!
