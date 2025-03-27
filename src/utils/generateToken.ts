@@ -6,12 +6,12 @@ export const generateTokenAndSetCookie = (
   id: mongoose.Types.ObjectId,
   res: Response
 ) => {
-  const token = jwt.sign({ id }, process.env.JWT_SECRET as string, {
-    expiresIn: "15d",
+  const token = jwt.sign({ id }, process.env.JWT_SECRET || "fallback_secret", {
+    expiresIn: parseInt(process.env.JWT_EXPIRES_IN || "1296000"), // 15 days in seconds
   });
 
   res.cookie("jwt", token, {
-    maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+    maxAge: parseInt(process.env.JWT_EXPIRES_IN || "1296000") * 1000, // convert to milliseconds
     httpOnly: true, // prevent XSS attacks, cross-site scripting attacks
     sameSite: "strict", // CSRF attacks, cross-site request forgery attacks
     secure: process.env.NODE_ENV !== "development", // only send the cookie over https in production

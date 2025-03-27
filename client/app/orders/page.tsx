@@ -12,10 +12,13 @@ import {
   useDeleteOrder,
 } from "@/lib/hooks/orders";
 import { Loader2 } from "lucide-react";
+import { ChatDialog } from "@/components/chat/ChatDialog";
+import { Order } from "@/types/order";
 
 export default function OrdersPage() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
 
   // Use React Query hooks
   const { data: myOrders = [], isLoading: isLoadingOrders } = useMyOrders();
@@ -27,11 +30,13 @@ export default function OrdersPage() {
     quantity: number;
   }) => {
     createOrder(data, {
-      onSuccess: () => {
+      onSuccess: (newOrder) => {
         toast({
           title: "Success",
           description: "Order created successfully",
         });
+        // Open chat dialog for the new order
+        setSelectedOrder(newOrder);
       },
       onError: (error: Error) => {
         toast({
@@ -50,6 +55,10 @@ export default function OrdersPage() {
           title: "Success",
           description: "Order deleted successfully",
         });
+        // Close chat dialog if the deleted order was selected
+        if (selectedOrder?._id === id) {
+          setSelectedOrder(null);
+        }
       },
       onError: (error: Error) => {
         toast({
@@ -59,6 +68,10 @@ export default function OrdersPage() {
         });
       },
     });
+  };
+
+  const handleOrderSelect = (order: Order) => {
+    setSelectedOrder(order);
   };
 
   if (!user) {
@@ -96,12 +109,21 @@ export default function OrdersPage() {
               <OrdersTable
                 orders={myOrders}
                 onDelete={handleDeleteOrder}
+                onSelect={handleOrderSelect}
                 isDeleting={isDeleting}
               />
             )}
           </CardContent>
         </Card>
       </div>
+
+      {selectedOrder && (
+        <ChatDialog
+          order={selectedOrder}
+          isOpen={true}
+          onClose={() => setSelectedOrder(null)}
+        />
+      )}
     </div>
   );
 }
