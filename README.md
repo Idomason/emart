@@ -56,7 +56,7 @@ export const useAuth = () => {
 };
 ```
 
-I'll help you create a clean API documentation for your GitHub README based on the codebase. Here's a formatted documentation:
+
 
 ```markdown
 # API Documentation
