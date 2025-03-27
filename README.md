@@ -34,31 +34,9 @@
 ### 1. Clone Repository
 ```bash
 git clone https://github.com/your-username/order-management-system.git
-cd order-management-system
+cd order-management-system 
 
 
-
-
-
-```typescript:client/lib/hooks/useAuth.ts
-import { useSelector } from "react-redux";
-import { RootState } from "@/lib/store";
-
-export const useAuth = () => {
-  const { user, isLoading, error } = useSelector((state: RootState) => state.auth);
-
-  return {
-    user,
-    isLoading,
-    error,
-    isAuthenticated: !!user,
-  };
-};
-```
-
-
-
-```markdown
 # API Documentation
 
 ## Authentication Endpoints
@@ -245,6 +223,3 @@ Admin-only endpoints require an admin role.
 - All requests that require authentication should include credentials
 - API base URL: `http://localhost:5000/api/v1` (configurable via environment)
 - WebSocket connection URL: `http://localhost:5000`
-```
-
-This documentation covers the main endpoints and WebSocket events in your application, including authentication, order management, and real-time chat functionality. Feel free to customize it further based on your specific needs!
