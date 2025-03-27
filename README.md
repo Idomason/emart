@@ -30,6 +30,9 @@
 - Node.js v18+
 - MongoDB Atlas account or local MongoDB
 - Git
+- NextJS 15
+- Redux
+- Tankstack Query
 
 ### 1. Clone Repository
 ```bash
