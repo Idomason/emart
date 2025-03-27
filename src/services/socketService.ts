@@ -29,24 +29,34 @@ export const initializeSocket = (server: HttpServer) => {
   // Authentication middleware for Socket.IO
   io.use(async (socket: Socket, next: (err?: Error) => void) => {
     try {
-      const token = socket.handshake.auth.token;
+      let token = socket.handshake.auth.token;
+
+      // If token is not in auth, try to get it from Authorization header
+      if (!token) {
+        const authHeader = socket.handshake.headers.authorization;
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+          token = authHeader.substring(7);
+        }
+      }
 
       if (!token) {
         throw new Error("Authentication error: No token provided");
       }
 
-      const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
-      const user = await User.findById(decoded.id);
+      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+      const user = await User.findById(decoded.userId);
 
       if (!user) {
         throw new Error("Authentication error: User not found");
       }
 
       // Attach user to socket for later use
-      socket.data.user = {
-        _id: user._id,
-        email: user.email,
-        role: user.role,
+      (socket as any).data = {
+        user: {
+          _id: user._id,
+          email: user.email,
+          role: user.role,
+        },
       };
 
       next();
@@ -69,7 +79,7 @@ export const initializeSocket = (server: HttpServer) => {
           _id: orderId,
           $or: [
             { user: socket.data.user._id }, // Order owner
-            ...(socket.data.user.role === "admin" ? [{}] : []), // Admin can access any
+            ...(socket.data.user.role === "admin" ? [{ _id: orderId }] : []), // Admin can access any
           ],
         });
 

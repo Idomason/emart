@@ -26,6 +26,13 @@ export const authenticate =
       req.user = user;
       next();
     } catch (error) {
-      res.status(401).json({ message: "Invalid token" });
+      console.error("Socket authentication error:", error);
+      let message = "Authentication failed";
+      if (error instanceof jwt.JsonWebTokenError) {
+        message = "Invalid token";
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      next(new Error(message));
     }
   };
