@@ -6,14 +6,25 @@ export const generateTokenAndSetCookie = (
   id: mongoose.Types.ObjectId,
   res: Response
 ) => {
-  const token = jwt.sign({ id }, process.env.JWT_SECRET || "fallback_secret", {
-    expiresIn: parseInt(process.env.JWT_EXPIRES_IN || "1296000"), // 15 days in seconds
+  const token = jwt.sign({ id }, process.env.JWT_SECRET as string, {
+    expiresIn: "15d",
   });
 
+  // Set the JWT in an HTTP-only cookie for security
   res.cookie("jwt", token, {
-    maxAge: parseInt(process.env.JWT_EXPIRES_IN || "1296000") * 1000, // convert to milliseconds
     httpOnly: true, // prevent XSS attacks, cross-site scripting attacks
     sameSite: "strict", // CSRF attacks, cross-site request forgery attacks
-    secure: process.env.NODE_ENV !== "development", // only send the cookie over https in production
+    maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+    secure: process.env.NODE_ENV === "production", // Use Secure cookies in production (requires HTTPS)
   });
+
+  // Also set a non-httpOnly cookie that can be read by JavaScript for socket.io authentication
+  res.cookie("socket_token", token, {
+    httpOnly: false, // Accessible to JavaScript
+    sameSite: "strict",
+    maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+    secure: process.env.NODE_ENV === "production",
+  });
+
+  return token;
 };

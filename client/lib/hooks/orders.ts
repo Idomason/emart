@@ -8,6 +8,7 @@ export const useMyOrders = () => {
     queryFn: async () => {
       return ordersApi.getMyOrders();
     },
+    refetchInterval: 3000,
   });
 };
 
@@ -17,6 +18,7 @@ export const useAllOrders = () => {
     queryFn: async () => {
       return ordersApi.getAllOrders();
     },
+    refetchInterval: 3000,
   });
 };
 
@@ -27,6 +29,7 @@ export const useOrder = (id: string) => {
       return ordersApi.getOrder(id);
     },
     enabled: !!id,
+    refetchInterval: 3000,
   });
 };
 
@@ -37,8 +40,15 @@ export const useCreateOrder = () => {
     mutationFn: async (data: Pick<Order, "description" | "quantity">) => {
       return ordersApi.createOrder(data);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+
+      queryClient.setQueryData(
+        ["orders", "my"],
+        (oldData: Order[] | undefined) => {
+          return oldData ? [data, ...oldData] : [data];
+        }
+      );
     },
   });
 };

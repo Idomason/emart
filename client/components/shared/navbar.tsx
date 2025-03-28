@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMutation } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/use-toast";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -27,9 +28,17 @@ const navItems = [
     label: "Services",
     href: "/services",
   },
+];
+
+// Authenticated user navigation items
+const authNavItems = [
   {
-    label: "Create Order",
+    label: "Orders",
     href: "/orders",
+  },
+  {
+    label: "Profile",
+    href: "/profile",
   },
 ];
 
@@ -37,6 +46,7 @@ export function Navbar() {
   const { user } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const { toast } = useToast();
 
   const { mutate: logoutMutation } = useMutation({
     mutationFn: async () => {
@@ -52,14 +62,34 @@ export function Navbar() {
       return response.json();
     },
     onSuccess: () => {
+      // Clear any stored tokens from localStorage
+      localStorage.removeItem("socket_token");
+      localStorage.removeItem("jwt");
+
       dispatch(logout());
-      router.push("/login");
+      toast({
+        title: "Success",
+        description: "You have successfully logged out",
+        duration: 3000,
+      });
+      router.push("/");
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Logout failed",
+        variant: "destructive",
+        duration: 3000,
+      });
     },
   });
 
   const handleLogout = () => {
     logoutMutation();
   };
+
+  // Determine which nav items to show based on authentication state
+  const displayNavItems = [...navItems, ...(user ? authNavItems : [])];
 
   return (
     <nav className="border-b bg-background sticky top-0 z-50">
@@ -72,7 +102,7 @@ export function Navbar() {
 
           {/* Navigation Links */}
           <ul className="hidden md:flex items-center gap-6">
-            {navItems.map((navLink) => (
+            {displayNavItems.map((navLink) => (
               <Link
                 key={navLink.label}
                 href={navLink.href}
@@ -86,16 +116,33 @@ export function Navbar() {
           {/* Auth Buttons */}
           <div className="flex items-center gap-4">
             {user ? (
-              <Button onClick={handleLogout} variant="outline">
-                Logout
-              </Button>
+              <>
+                <span className="text-sm text-muted-foreground hidden md:inline-block">
+                  Welcome,{" "}
+                  <span className="font-semibold text-slate-800 capitalize">
+                    {user.email?.split("@")[0]}
+                  </span>
+                </span>
+                <Button onClick={handleLogout} variant="outline">
+                  Logout
+                </Button>
+              </>
             ) : (
-              <Button
-                onClick={() => router.push("/login")}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                Login
-              </Button>
+              <>
+                <Button
+                  onClick={() => router.push("/sign-up")}
+                  variant="outline"
+                  className="hidden sm:inline-flex"
+                >
+                  Sign Up
+                </Button>
+                <Button
+                  onClick={() => router.push("/login")}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  Login
+                </Button>
+              </>
             )}
           </div>
         </div>

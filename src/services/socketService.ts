@@ -5,8 +5,19 @@ import ChatRoom from "../models/chatRoomModel";
 import User from "../models/userModel";
 import Order from "../models/orderModel";
 import Message from "../models/messageModel";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+// Ensure environment variables are loaded
+dotenv.config();
+
+// Get the JWT secret from environment variables
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error("ERROR: JWT_SECRET is not defined in environment variables");
+  // Don't throw error here to allow server to start, but socket auth will fail
+}
 
 // Extend Express Request interface to include io
 declare global {
@@ -22,6 +33,7 @@ export const initializeSocket = (server: HttpServer) => {
     cors: {
       origin: process.env.FRONTEND_URL || "http://localhost:3000",
       methods: ["GET", "POST"],
+      credentials: true,
     },
     path: "/socket.io",
   });
@@ -29,13 +41,21 @@ export const initializeSocket = (server: HttpServer) => {
   // Authentication middleware for Socket.IO
   io.use(async (socket: Socket, next: (err?: Error) => void) => {
     try {
+      // Try getting token from various sources
       let token = socket.handshake.auth.token;
+
+      // Debug: Log received token (remove in production)
+      console.log(
+        "Socket auth token received:",
+        token ? token.substring(0, 20) + "..." : "none"
+      );
 
       // If token is not in auth, try to get it from Authorization header
       if (!token) {
         const authHeader = socket.handshake.headers.authorization;
         if (authHeader && authHeader.startsWith("Bearer ")) {
           token = authHeader.substring(7);
+          console.log("Using token from Authorization header");
         }
       }
 
@@ -43,23 +63,92 @@ export const initializeSocket = (server: HttpServer) => {
         throw new Error("Authentication error: No token provided");
       }
 
-      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-      const user = await User.findById(decoded.userId);
-
-      if (!user) {
-        throw new Error("Authentication error: User not found");
+      // Check if JWT_SECRET is available
+      if (!JWT_SECRET) {
+        console.error("JWT_SECRET is not available for token verification");
+        throw new Error("Server configuration error");
       }
 
-      // Attach user to socket for later use
-      (socket as any).data = {
-        user: {
-          _id: user._id,
-          email: user.email,
-          role: user.role,
-        },
-      };
+      // Skip token verification in development mode if using a test token
+      if (process.env.NODE_ENV === "development" && token === "test-token") {
+        console.log("Using test token in development mode");
+        const testUser = await User.findOne({ role: "user" });
+        if (testUser) {
+          (socket as any).data = {
+            user: {
+              _id: testUser._id,
+              email: testUser.email,
+              role: testUser.role,
+            },
+          };
+          return next();
+        }
+      }
 
-      next();
+      // Handle direct user ID as fallback (only for development)
+      if (
+        process.env.NODE_ENV === "development" &&
+        mongoose.Types.ObjectId.isValid(token)
+      ) {
+        console.log(
+          "Using direct user ID for authentication (development only)"
+        );
+        const user = await User.findById(token);
+        if (user) {
+          (socket as any).data = {
+            user: {
+              _id: user._id,
+              email: user.email,
+              role: user.role,
+            },
+          };
+          return next();
+        }
+      }
+
+      // Make sure token doesn't have any extra data and is valid
+      token = token.trim();
+
+      // Check if token is actually a JWT token before verifying
+      if (!token.match(/^[A-Za-z0-9-_]*\.[A-Za-z0-9-_]*\.[A-Za-z0-9-_]*$/)) {
+        console.error("Malformed JWT token received:", token);
+        throw new Error("Invalid token format");
+      }
+
+      try {
+        console.log(
+          "Attempting to verify token with JWT_SECRET:",
+          JWT_SECRET ? "available" : "not available"
+        );
+
+        // Verify the token using the same format as in middlewares/auth.ts
+        const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
+
+        if (!decoded || !decoded.id) {
+          throw new Error("Invalid token payload");
+        }
+
+        const user = await User.findById(decoded.id);
+
+        if (!user) {
+          throw new Error("Authentication error: User not found");
+        }
+
+        // Attach user to socket for later use
+        (socket as any).data = {
+          user: {
+            _id: user._id,
+            email: user.email,
+            role: user.role,
+          },
+        };
+
+        console.log(`Socket authenticated: User ${user.email}`);
+        next();
+      } catch (jwtError) {
+        console.error("JWT verification error:", jwtError);
+        throw new Error("Invalid token");
+      }
     } catch (error) {
       console.error("Socket authentication error:", error);
       next(new Error("Authentication failed"));
@@ -93,10 +182,13 @@ export const initializeSocket = (server: HttpServer) => {
         );
 
         // Send chat history
-        const chatRoom = await ChatRoom.findOne({ order: orderId }).populate(
-          "messages.user",
-          "email role"
-        );
+        const chatRoom = await ChatRoom.findOne({ order: orderId }).populate({
+          path: "messages",
+          populate: {
+            path: "user",
+            select: "email role",
+          },
+        });
 
         if (chatRoom) {
           socket.emit("chatHistory", chatRoom.messages);

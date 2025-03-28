@@ -56,7 +56,26 @@ export function LoginForm() {
         throw new Error(error.message || "Login failed");
       }
 
-      return response.json();
+      const responseData = await response.json();
+
+      // Extract token from cookies for socket.io authentication
+      const cookies = document.cookie.split(";");
+      const socketTokenCookie = cookies.find((cookie) =>
+        cookie.trim().startsWith("socket_token=")
+      );
+
+      if (socketTokenCookie) {
+        const socketToken = socketTokenCookie
+          .trim()
+          .substring("socket_token=".length);
+        // Store token in localStorage for socket authentication
+        localStorage.setItem("socket_token", socketToken);
+        console.log("Socket token saved to localStorage");
+      } else {
+        console.warn("No socket_token cookie found after login");
+      }
+
+      return responseData;
     },
     onSuccess: (data) => {
       dispatch(setUser(data.data));

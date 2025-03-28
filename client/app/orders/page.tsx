@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { OrdersTable } from "@/components/orders/OrdersTable";
 import { OrderForm } from "@/components/orders/OrderForm";
 import { useToast } from "@/components/ui/use-toast";
@@ -21,9 +21,22 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
 
   // Use React Query hooks
-  const { data: myOrders = [], isLoading: isLoadingOrders } = useMyOrders();
+  const {
+    data: myOrders = [],
+    isLoading: isLoadingOrders,
+    refetch,
+  } = useMyOrders();
   const { mutate: createOrder, isLoading: isCreating } = useCreateOrder();
   const { mutate: deleteOrder, isLoading: isDeleting } = useDeleteOrder();
+
+  // Setup periodic refetching for real-time updates
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      refetch();
+    }, 2000); // Refetch every 2 seconds
+
+    return () => clearInterval(intervalId);
+  }, [refetch]);
 
   const handleCreateOrder = async (data: {
     description: string;
@@ -34,7 +47,12 @@ export default function OrdersPage() {
         toast({
           title: "Success",
           description: "Order created successfully",
+          duration: 3000,
         });
+
+        // Force refetch to ensure immediate updates
+        refetch();
+
         // Open chat dialog for the new order
         setSelectedOrder(newOrder);
       },
@@ -43,6 +61,7 @@ export default function OrdersPage() {
           title: "Error",
           description: error.message || "Failed to create order",
           variant: "destructive",
+          duration: 3000,
         });
       },
     });
@@ -54,7 +73,12 @@ export default function OrdersPage() {
         toast({
           title: "Success",
           description: "Order deleted successfully",
+          duration: 3000,
         });
+
+        // Force refetch to ensure immediate updates
+        refetch();
+
         // Close chat dialog if the deleted order was selected
         if (selectedOrder?._id === id) {
           setSelectedOrder(null);
@@ -65,6 +89,7 @@ export default function OrdersPage() {
           title: "Error",
           description: error.message || "Failed to delete order",
           variant: "destructive",
+          duration: 3000,
         });
       },
     });
@@ -75,13 +100,7 @@ export default function OrdersPage() {
   };
 
   if (!user) {
-    return (
-      <div className="container mx-auto py-8">
-        <h1 className="text-2xl font-bold mb-4">
-          Please log in to view your orders
-        </h1>
-      </div>
-    );
+    return null; // Let the middleware handle the redirect
   }
 
   return (
@@ -105,13 +124,17 @@ export default function OrdersPage() {
               <div className="flex justify-center items-center p-8">
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
-            ) : (
+            ) : myOrders.length > 0 ? (
               <OrdersTable
                 orders={myOrders}
                 onDelete={handleDeleteOrder}
                 onSelect={handleOrderSelect}
                 isDeleting={isDeleting}
               />
+            ) : (
+              <p className="text-center py-4 text-muted-foreground">
+                You haven't created any orders yet.
+              </p>
             )}
           </CardContent>
         </Card>
