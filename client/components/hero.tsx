@@ -1,7 +1,13 @@
-import React from "react";
+"use client";
+
+import Link from "next/link";
 import Image from "next/image";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store";
 
 export default function Hero() {
+  const { user } = useSelector((state: RootState) => state.auth);
+
   return (
     <div className="relative bg-gradient-to-b from-background to-muted">
       <div className="container mx-auto px-4 py-12">
@@ -17,12 +23,18 @@ export default function Hero() {
               trust us for their shopping needs.
             </p>
             <div className="flex gap-4">
-              <button className="bg-primary text-primary-foreground px-6 py-3 rounded-md hover:bg-primary/90 transition-colors">
-                Order Now
-              </button>
-              <button className="border border-input bg-background px-6 py-3 rounded-md hover:bg-accent transition-colors">
+              <Link
+                href={user ? "/orders" : "/sign-up"}
+                className="bg-primary cursor-pointer text-primary-foreground px-6 py-3 rounded-md hover:bg-primary/90 transition-colors"
+              >
+                {user ? "Order Now" : "Try Now"}
+              </Link>
+              <Link
+                href="/products"
+                className="border cursor-pointer border-input bg-background px-6 py-3 rounded-md hover:bg-accent transition-colors"
+              >
                 Learn More
-              </button>
+              </Link>
             </div>
           </div>
           <div className="relative h-[400px] w-full">

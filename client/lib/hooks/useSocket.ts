@@ -7,9 +7,6 @@ const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 // Helper function to extract token from cookies with better error handling
 const getTokenFromCookie = (): string | null => {
   try {
-    // Log all cookies for debugging (remove in production)
-    console.log("All cookies:", document.cookie);
-
     if (!document.cookie) {
       console.error("No cookies found at all");
       return null;
