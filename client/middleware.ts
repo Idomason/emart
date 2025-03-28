@@ -15,14 +15,23 @@ export function middleware(request: NextRequest) {
 
   // Allow access to public routes without authentication
   if (isPublicRoute) {
+    // If user is already logged in and tries to access login/signup pages, redirect to profile
+    if (
+      token &&
+      (request.nextUrl.pathname === "/login" ||
+        request.nextUrl.pathname === "/signup")
+    ) {
+      return NextResponse.redirect(new URL("/profile", request.url));
+    }
     return NextResponse.next();
   }
 
-  // Redirect to login if no token is present
+  // Redirect to login if no token is present for protected routes
   if (!token) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
+  // User is authenticated, allow access to protected routes
   return NextResponse.next();
 }
 
